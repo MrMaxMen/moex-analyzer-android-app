@@ -1,0 +1,50 @@
+# Built application files
+*.apk
+*.aar
+*.aab
+*.dex
+
+# Java class files
+*.class
+
+# Generated build files
+build/
+.kotlin/
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Local configuration (SDK path, private API keys)
+local.properties
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio captures and native build outputs
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystores & Secrets
+*.keystore
+*.jks
+*.p8
+*.p12
+*.pem
+*.key
+signing.properties
+keystore.properties
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Log files
+*.log
