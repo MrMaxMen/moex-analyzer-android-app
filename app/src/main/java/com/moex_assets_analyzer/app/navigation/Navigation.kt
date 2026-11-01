@@ -2,14 +2,16 @@ package com.moex_assets_analyzer.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.moex_assets_analyzer.app.ui.AssetSelectionPage
+import com.moex_assets_analyzer.app.ui.AssetSelectionPageRoute
 import com.moex_assets_analyzer.app.ui.ChartPage
 import com.moex_assets_analyzer.app.ui.ConfigPage
 import com.moex_assets_analyzer.app.ui.ResultsPage
+import com.moex_assets_analyzer.app.viewmodels.SelectionVM
 
 
 @Composable
@@ -18,11 +20,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
     NavHost(
         navController = navController,
-        startDestination = SearchRoute,
+        startDestination = SelectionRoute,
         modifier = modifier
     ) {
-        composable<SearchRoute> {
-            AssetSelectionPage(
+        composable<SelectionRoute> {
+            val vm: SelectionVM = viewModel(factory = SelectionVM.Factory)
+            AssetSelectionPageRoute(
+                vm,
                 onNext = { navController.navigate(ConfigRoute) }
             )
         }

@@ -3,7 +3,7 @@ package com.moex_assets_analyzer.app.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SearchRoute
+object SelectionRoute
 
 @Serializable
 object ConfigRoute

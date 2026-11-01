@@ -47,16 +47,16 @@ fun parseTickers(jsonString: String) : List<String>{
 }
 
 
-data class Fund(val ticker: String, val fullName: String)
-
-fun parseFunds(jsonString: String): List<Fund> {
-    val data = Json.parseToJsonElement(jsonString).jsonObject["securities"]!!.jsonObject["data"]!!.jsonArray
-    return data.mapNotNull { row ->
-        val ticker = row.jsonArray.getOrNull(0)?.jsonPrimitive?.content
-        val name = row.jsonArray.getOrNull(1)?.jsonPrimitive?.content
-        val fullName = row.jsonArray.getOrNull(2)?.jsonPrimitive?.content
-        if (name?.contains("ETF", ignoreCase = true) == true || name?.contains("БПИФ", ignoreCase = true) == true || name?.contains("ПИФ", ignoreCase = true) == true || fullName?.contains("БПИФ", ignoreCase = true) == true || fullName?.contains("ПИФ", ignoreCase = true) == true) {
-            if (ticker != null && fullName != null) Fund(ticker, fullName) else null
-        } else null
-    }.distinctBy { it.ticker }
-}
+//data class Fund(val ticker: String, val fullName: String)
+//
+//fun parseFunds(jsonString: String): List<Fund> {
+//    val data = Json.parseToJsonElement(jsonString).jsonObject["securities"]!!.jsonObject["data"]!!.jsonArray
+//    return data.mapNotNull { row ->
+//        val ticker = row.jsonArray.getOrNull(0)?.jsonPrimitive?.content
+//        val name = row.jsonArray.getOrNull(1)?.jsonPrimitive?.content
+//        val fullName = row.jsonArray.getOrNull(2)?.jsonPrimitive?.content
+//        if (name?.contains("ETF", ignoreCase = true) == true || name?.contains("БПИФ", ignoreCase = true) == true || name?.contains("ПИФ", ignoreCase = true) == true || fullName?.contains("БПИФ", ignoreCase = true) == true || fullName?.contains("ПИФ", ignoreCase = true) == true) {
+//            if (ticker != null && fullName != null) Fund(ticker, fullName) else null
+//        } else null
+//    }.distinctBy { it.ticker }
+//}
