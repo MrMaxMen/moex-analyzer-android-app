@@ -11,6 +11,8 @@ import com.moex_assets_analyzer.app.ui.AssetSelectionPageRoute
 import com.moex_assets_analyzer.app.ui.ChartPage
 import com.moex_assets_analyzer.app.ui.ConfigPage
 import com.moex_assets_analyzer.app.ui.ResultsPage
+import com.moex_assets_analyzer.app.ui.ResultsTablePageRout
+import com.moex_assets_analyzer.app.viewmodels.ResultsVM
 import com.moex_assets_analyzer.app.viewmodels.SelectionVM
 
 
@@ -30,17 +32,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 onNext = { navController.navigate(ConfigRoute) }
             )
         }
-        composable<ConfigRoute> {
-            ConfigPage(
-                onNext = { navController.navigate(ResultsRoute) }
-            )
-        }
+
         composable<ResultsRoute> {
-            ResultsPage(
-                onOpenChart = { ticker ->
-                    navController.navigate(ChartRoute(ticker = ticker, monthsBack = 12))
-                }
-            )
+            val vm : ResultsVM = viewModel(factory = ResultsVM.Factory)
+            ResultsTablePageRout(vm)
         }
         composable<ChartRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ChartRoute>()

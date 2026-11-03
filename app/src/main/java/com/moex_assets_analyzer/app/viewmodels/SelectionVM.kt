@@ -21,11 +21,9 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
     }
 
     private var userInput by mutableStateOf("")
-    private var selectedAssets by mutableStateOf<List<String>>(emptyList())
+    private var selectedAssets by mutableStateOf<Set<String>>(emptySet())
     private var isLoading by mutableStateOf(false)
-
-    private var isMetricsSelection by mutableStateOf(false)
-
+    private var selectionStep by mutableStateOf(SelectionStep.ASSETS_SELECTION)
     private var metricsSelection by mutableStateOf(MetricsSelection())
 
     val uiState: SelectionPageUiState
@@ -34,31 +32,44 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
             selectedAssets = selectedAssets,
             isLoading = isLoading,
             assetNames = repository.assetNames,
-            isMetricsSelection = isMetricsSelection,
+            selectionStep = selectionStep,
             metricsSelection = metricsSelection
         )
 
-    fun onInputChange(text: String) {
-        userInput = text
-    }
-
-    fun onMetricsSelection(){
-        isMetricsSelection = true
-    }
-
-    fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection){
-        metricsSelection = newMetricsSelection
+    val actions = Actions()
+    inner class Actions {
+        fun onInputChange(text: String) {
+            userInput = text
+        }
+        fun onMetricsSelection() {
+            selectionStep = SelectionStep.METRICS_SELECTION
+        }
+        fun onBackToAssetsSelection() {
+            selectionStep = SelectionStep.ASSETS_SELECTION
+        }
+        fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection) {
+            metricsSelection = newMetricsSelection
+        }
+        fun onAssetSelection(asset: String) {
+            selectedAssets += asset
+        }
+        fun onAssetCancelSelection(asset: String) {
+            selectedAssets -= asset
+        }
     }
 }
 
-
+enum class SelectionStep {
+    ASSETS_SELECTION,
+    METRICS_SELECTION
+}
 
 data class SelectionPageUiState(
     val userInput: String = "",
-    val selectedAssets: List<String> = emptyList(),
+    val selectedAssets: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val assetNames: List<String> = emptyList(),
-    val isMetricsSelection : Boolean = false,
+    val selectionStep: SelectionStep = SelectionStep.ASSETS_SELECTION,
     val metricsSelection: MetricsSelection = MetricsSelection()
 )
 
