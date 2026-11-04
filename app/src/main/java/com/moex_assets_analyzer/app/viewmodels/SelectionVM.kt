@@ -5,10 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.moex_assets_analyzer.app.MaaApplication
 import com.moex_assets_analyzer.app.Repository
+import kotlinx.coroutines.launch
 
 class SelectionVM(private val repository: Repository) : ViewModel() {
     companion object {
@@ -26,12 +28,23 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
     private var selectionStep by mutableStateOf(SelectionStep.ASSETS_SELECTION)
     private var metricsSelection by mutableStateOf(MetricsSelection())
 
+    private var assetNames by mutableStateOf<List<String>>(emptyList())
+
+    init {
+        viewModelScope.launch {
+            repository.assetNames.collect { names ->
+                assetNames = names
+            }
+        }
+    }
+
+
     val uiState: SelectionPageUiState
         get() = SelectionPageUiState(
             userInput = userInput,
             selectedAssets = selectedAssets,
             isLoading = isLoading,
-            assetNames = repository.assetNames,
+            assetNames = assetNames,
             selectionStep = selectionStep,
             metricsSelection = metricsSelection
         )
@@ -55,6 +68,9 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
         }
         fun onAssetCancelSelection(asset: String) {
             selectedAssets -= asset
+        }
+        fun saveSelectionsToRepository(){
+            repository.updateSelection(selectedAssets,metricsSelection)
         }
     }
 }

@@ -6,28 +6,47 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.moex_assets_analyzer.app.entities.HistoryRecord
 import com.moex_assets_analyzer.app.entities.TrendResult
+import com.moex_assets_analyzer.app.viewmodels.MetricsSelection
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
 
 class Repository(
     private val apiService: ApiService,
     private val appScope: CoroutineScope
 ) {
 
-    var assetNames: List<String> by mutableStateOf(emptyList())
+    private val _assetNames = MutableStateFlow<List<String>>(emptyList())
+    val assetNames: StateFlow<List<String>> = _assetNames.asStateFlow()
+
+    private val _histories = MutableStateFlow<Map<String, List<HistoryRecord>>>(emptyMap())
+    val histories: StateFlow<Map<String, List<HistoryRecord>>> = _histories.asStateFlow()
+
+    private val _trendsResults = MutableStateFlow<List<TrendResult>>(emptyList())
+    val trendsResults: StateFlow<List<TrendResult>> = _trendsResults.asStateFlow()
+
+
+    var selectedAssets: Set<String> = emptySet()
         private set
 
-    var histories: Map<String, List<HistoryRecord>> by mutableStateOf(emptyMap())
+    var metricsSelection: MetricsSelection = MetricsSelection()
         private set
 
-    var trendsResults: List<TrendResult> by mutableStateOf(emptyList())
-        private set
+    fun updateSelection(assets: Set<String>, metrics: MetricsSelection) {
+        this.selectedAssets = assets
+        this.metricsSelection = metrics
+    }
 
     fun fetchNames() {
         appScope.launch {
             try {
-                assetNames = apiService.getAssetsList()
+                _assetNames.value = apiService.getAssetsList()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -36,11 +55,12 @@ class Repository(
         }
     }
 
-    fun fetchHistory() {
-        //зовём метод core передовая список имён активов для запроса их истории
+    suspend fun fetchHistory() = withContext(Dispatchers.IO){
+
     }
 
-    fun calculateMetrics() {
-        //зовём метод core который вызывает метод калькулятора , передаём список активов и их историю
+    suspend fun calculateMetrics() = withContext(Dispatchers.Default) {
+
     }
 }
+

@@ -396,7 +396,10 @@ private fun MetricsSelectionPage(
         Spacer(modifier = Modifier.fillMaxWidth().weight(0.1f))
 
         Button(
-            onClick = onNext,
+            onClick = {
+                actions?.saveSelectionsToRepository()
+                onNext()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
