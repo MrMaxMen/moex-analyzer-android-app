@@ -97,6 +97,8 @@ fun ResultsTablePage(
     val assetColumnWidth = 70.dp
     val metricColumnWidth = 94.dp
 
+
+
     CompositionLocalProvider(LocalOverscrollFactory provides null) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             stickyHeader {
@@ -105,7 +107,7 @@ fun ResultsTablePage(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                        // Закреплённая колонка — вне горизонтального скролла
+
                         Text(
                             text = "Asset",
                             fontWeight = FontWeight.Bold,
@@ -116,7 +118,7 @@ fun ResultsTablePage(
                         )
                         VerticalDivider()
                         VerticalDivider()
-                        // Один общий Row с горизонтальным скроллом для числовых колонок
+
                         Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
                             Text(
                                 "Daily",

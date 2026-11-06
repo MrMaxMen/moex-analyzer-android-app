@@ -1,5 +1,6 @@
 package com.moex_assets_analyzer.app.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -290,6 +291,12 @@ private fun MetricsSelectionPage(
     modifier: Modifier = Modifier,
     onNext: () -> Unit
 ) {
+
+
+    BackHandler {
+        actions?.onBackToAssetsSelection()
+    }
+
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
