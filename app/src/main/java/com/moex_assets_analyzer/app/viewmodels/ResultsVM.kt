@@ -2,6 +2,7 @@ package com.moex_assets_analyzer.app.viewmodels
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,8 +13,7 @@ import com.moex_assets_analyzer.app.Repository
 import com.moex_assets_analyzer.app.entities.TrendResult
 import kotlinx.coroutines.launch
 
-class ResultsVM (private val repository: Repository)  : ViewModel(){
-
+class ResultsVM(private val repository: Repository) : ViewModel() {
     companion object {
         val Factory = viewModelFactory {
             initializer {
@@ -23,25 +23,39 @@ class ResultsVM (private val repository: Repository)  : ViewModel(){
         }
     }
 
-    val uiState : ResultsPageUiState
-        get() = ResultsPageUiState(
-            isLoading = true
-        )
-
-    var trendResults : List<TrendResult> = emptyList()
+    private var isLoading by mutableStateOf(false)
+    var trendResultList by mutableStateOf<List<TrendResult>>(emptyList())
+    var errorMessage by mutableStateOf<String?>(null)
 
     init {
+        loadMetrics()
+    }
+
+    fun loadMetrics() {
         viewModelScope.launch {
-            repository.fetchHistory()
-            repository.calculateMetrics()
-            trendResults = repository.trendsResults.value
+            isLoading = true
+            errorMessage = null
+            try {
+                trendResultList = repository.getMetrics()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                errorMessage = e.localizedMessage ?: "Ошибка загрузки данных"
+            } finally {
+                isLoading = false
+            }
         }
     }
 
-
+    val uiState: ResultsPageUiState
+        get() = ResultsPageUiState(
+            isLoading = isLoading,
+            trendResultList = trendResultList,
+            errorMessage = errorMessage
+        )
 }
 
-
 data class ResultsPageUiState(
-    val isLoading : Boolean = false
+    val isLoading: Boolean = false,
+    val trendResultList: List<TrendResult> = emptyList(),
+    val errorMessage: String? = null
 )

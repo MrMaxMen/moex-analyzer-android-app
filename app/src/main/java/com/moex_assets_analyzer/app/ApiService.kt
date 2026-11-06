@@ -10,15 +10,13 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import java.time.LocalDate
 
-
 class ApiService(
-    val client : HttpClient
+    val client: HttpClient
 ) {
-    suspend fun getAssetsList() = parseTickers(
-        client.get(ASSETS_LIST_URL)
-            .bodyAsText(Charsets.UTF_8)
-    )
-
+    suspend fun getAssetsList(): List<String> = runCatching {
+        val text = client.get(ASSETS_LIST_URL).bodyAsText(Charsets.UTF_8)
+        parseTickers(text)
+    }.getOrDefault(emptyList())
 
     suspend fun getAssetHistoryFor(
         asset: String,
@@ -26,12 +24,15 @@ class ApiService(
     ): List<HistoryRecord> {
         val history = mutableListOf<HistoryRecord>()
         while (true) {
-            val page =
-                parseHistory(
-                    client.get(historyUrlFor(asset, since, start = history.size)).bodyAsText()
-                )
+            val page = runCatching {
+                val url = historyUrlFor(asset, since, start = history.size)
+                val responseText = client.get(url).bodyAsText()
+                parseHistory(responseText)
+            }.getOrDefault(emptyList())
+
+            if (page.isEmpty()) break
             history += page
-            if (page.size != 100) break
+            if (page.size < 100) break
         }
         return history
     }

@@ -32,9 +32,9 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.assetNames.collect { names ->
-                assetNames = names
-            }
+            isLoading = true
+            assetNames = repository.getAssetNames()
+            isLoading = false
         }
     }
 
@@ -49,29 +49,38 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
             metricsSelection = metricsSelection
         )
 
-    val actions = Actions()
-    inner class Actions {
-        fun onInputChange(text: String) {
+    val actions: Actions = object : Actions {
+        override fun onInputChange(text: String) {
             userInput = text
         }
-        fun onMetricsSelection() {
+        override fun onMetricsSelection() {
             selectionStep = SelectionStep.METRICS_SELECTION
         }
-        fun onBackToAssetsSelection() {
+        override fun onBackToAssetsSelection() {
             selectionStep = SelectionStep.ASSETS_SELECTION
         }
-        fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection) {
+        override fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection) {
             metricsSelection = newMetricsSelection
         }
-        fun onAssetSelection(asset: String) {
+        override fun onAssetSelection(asset: String) {
             selectedAssets += asset
         }
-        fun onAssetCancelSelection(asset: String) {
+        override fun onAssetCancelSelection(asset: String) {
             selectedAssets -= asset
         }
-        fun saveSelectionsToRepository(){
+        override fun saveSelectionsToRepository(){
             repository.updateSelection(selectedAssets,metricsSelection)
         }
+    }
+
+    interface Actions {
+        fun onInputChange(text: String)
+        fun onMetricsSelection()
+        fun onBackToAssetsSelection()
+        fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection)
+        fun onAssetSelection(asset: String)
+        fun onAssetCancelSelection(asset: String)
+        fun saveSelectionsToRepository()
     }
 }
 

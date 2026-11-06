@@ -5,6 +5,7 @@ import com.moex_assets_analyzer.app.others.configureHttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MaaApplication : Application() {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -15,6 +16,8 @@ class MaaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        repository.fetchNames()
+        appScope.launch {
+            repository.getAssetNames()
+        }
     }
 }

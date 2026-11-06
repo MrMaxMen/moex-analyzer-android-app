@@ -29,10 +29,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             val vm: SelectionVM = viewModel(factory = SelectionVM.Factory)
             AssetSelectionPageRoute(
                 vm,
-                onNext = { navController.navigate(ConfigRoute) }
+                onNext = { navController.navigate(ResultsRoute) }
             )
         }
-
         composable<ResultsRoute> {
             val vm : ResultsVM = viewModel(factory = ResultsVM.Factory)
             ResultsTablePageRout(vm)

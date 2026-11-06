@@ -5,8 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 object SelectionRoute
 
-@Serializable
-object ConfigRoute
 
 @Serializable
 object ResultsRoute
