@@ -1,5 +1,6 @@
 package com.moex_assets_analyzer.app.ui
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -30,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -45,52 +45,57 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moex_assets_analyzer.app.viewmodels.MetricsSelection
+import com.moex_assets_analyzer.app.viewmodels.Dates
 import com.moex_assets_analyzer.app.viewmodels.SelectionPageUiState
 import com.moex_assets_analyzer.app.viewmodels.SelectionStep
 import com.moex_assets_analyzer.app.viewmodels.SelectionVM
 
 @Preview(showSystemUi = true)
 @Composable
-fun AssetSelectionPagePreview() {
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            AssetSelectionPage(
-                uiState = SelectionPageUiState(
-                    userInput = "A",
-                    assetNames = listOf("AMFL", "AKMM", "LQDT"),
-                    selectionStep = SelectionStep.ASSETS_SELECTION,
-                    selectedAssets = setOf("AMFL")
-                ),
-                onNext = {}
-            )
+fun SelectionPagePreview() {
+    AppTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                SelectionPage(
+                    uiState = SelectionPageUiState(
+                        userInput = "A",
+                        assetNames = listOf("AMFL", "AKMM", "LQDT"),
+                        selectionStep = SelectionStep.DATE_SELECTION,
+                        selectedAssets = setOf("AMFL")
+                    ),
+                    onNext = {}
+                )
+            }
         }
     }
 }
 
 @Composable
-fun AssetSelectionPageRoute(
+fun SelectionPageRoute(
     vm: SelectionVM,
     onNext: () -> Unit
 ) {
-    AssetSelectionPage(
+    SelectionPage(
         uiState = vm.uiState,
         actions = vm.actions,
         onNext = onNext
     )
 }
 
+
+
 @Composable
-fun AssetSelectionPage(
+fun SelectionPage(
     uiState: SelectionPageUiState,
     actions: SelectionVM.Actions? = null,
     onNext: () -> Unit
@@ -109,19 +114,19 @@ fun AssetSelectionPage(
         ) {
             when (uiState.selectionStep) {
                 SelectionStep.ASSETS_SELECTION -> {
-                    AssetsSelectionStage(
+                    AssetsSelectionScreen(
                         uiState = uiState,
                         actions = actions,
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                SelectionStep.METRICS_SELECTION -> {
-                    MetricsSelectionPage(
-                        metricsSelection = uiState.metricsSelection,
+                SelectionStep.DATE_SELECTION -> {
+                    DateSelectionScreen(
                         actions = actions,
                         modifier = Modifier.weight(1f),
-                        onNext = onNext
+                        onNext = onNext,
+                        selectedDate = uiState.selectedDate
                     )
                 }
             }
@@ -129,8 +134,10 @@ fun AssetSelectionPage(
     }
 }
 
+
+
 @Composable
-private fun AssetsSelectionStage(
+private fun AssetsSelectionScreen(
     uiState: SelectionPageUiState,
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier
@@ -271,7 +278,7 @@ private fun AssetsSelectionStage(
             ) + fadeOut(animationSpec = tween(250))
         ) {
             Button(
-                onClick = { actions?.onMetricsSelection() },
+                onClick = { actions?.onDateSelectionStep() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -284,14 +291,17 @@ private fun AssetsSelectionStage(
     }
 }
 
+
+
 @Composable
-private fun MetricsSelectionPage(
-    metricsSelection: MetricsSelection,
+private fun DateSelectionScreen(
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier,
+    selectedDate: Dates?,
     onNext: () -> Unit
 ) {
-
+    val context = LocalContext.current
+    val dates = Dates.entries.toList()
 
     BackHandler {
         actions?.onBackToAssetsSelection()
@@ -306,97 +316,27 @@ private fun MetricsSelectionPage(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 50.dp)
+                modifier = Modifier.padding(horizontal = 50.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.dailyRatePercent,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(metricsSelection.copy(dailyRatePercent = it))
+
+                Text(
+                    text = "Records Since: ${selectedDate ?: "not selected"}",
+                    Modifier.padding(bottom = 50.dp)
+                )
+
+                Spacer(Modifier.fillMaxWidth().height(50.dp))
+
+                dates.forEach {
+                    Button(
+                        onClick = {
+                            actions?.onDateSelection(it)
                         }
-                    )
-                    Text("Daily Growth Rate (%)")
+                    ) {
+                        Text(it.toString())
+                    }
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.monthlyRatePercent,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(
-                                metricsSelection.copy(
-                                    monthlyRatePercent = it
-                                )
-                            )
-                        }
-                    )
-                    Text("Monthly Return (%)")
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.annualRatePercent,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(metricsSelection.copy(annualRatePercent = it))
-                        }
-                    )
-                    Text("Annual Return (CAGR, %)")
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.totalPeriodReturnPercent,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(
-                                metricsSelection.copy(
-                                    totalPeriodReturnPercent = it
-                                )
-                            )
-                        }
-                    )
-                    Text("Total Period Return (%)")
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.maxDrawdownPercent,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(
-                                metricsSelection.copy(
-                                    maxDrawdownPercent = it
-                                )
-                            )
-                        }
-                    )
-                    Text("Maximum Drawdown (%)")
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = metricsSelection.rSquared,
-                        onCheckedChange = {
-                            actions?.onMetricsSelectionChange(metricsSelection.copy(rSquared = it))
-                        }
-                    )
-                    Text("Coefficient of Determination (R²)")
-                }
             }
         }
 
@@ -404,8 +344,12 @@ private fun MetricsSelectionPage(
 
         Button(
             onClick = {
-                actions?.saveSelectionsToRepository()
-                onNext()
+                if (selectedDate != null) {
+                    actions?.saveSelectionsToRepository()
+                    onNext()
+                } else {
+                    Toast.makeText(context, "Please select a date", Toast.LENGTH_SHORT).show()
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
