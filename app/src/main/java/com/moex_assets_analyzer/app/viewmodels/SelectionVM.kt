@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.moex_assets_analyzer.app.MaaApplication
 import com.moex_assets_analyzer.app.Repository
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class SelectionVM(private val repository: Repository) : ViewModel() {
     companion object {
@@ -26,8 +27,7 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
     private var selectedAssets by mutableStateOf<Set<String>>(emptySet())
     private var isLoading by mutableStateOf(false)
     private var selectionStep by mutableStateOf(SelectionStep.ASSETS_SELECTION)
-    private var metricsSelection by mutableStateOf(MetricsSelection())
-
+    private var selectedDate by mutableStateOf<Dates?>(null)
     private var assetNames by mutableStateOf<List<String>>(emptyList())
 
     init {
@@ -46,21 +46,18 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
             isLoading = isLoading,
             assetNames = assetNames,
             selectionStep = selectionStep,
-            metricsSelection = metricsSelection
+            selectedDate = selectedDate
         )
 
     val actions: Actions = object : Actions {
         override fun onInputChange(text: String) {
             userInput = text
         }
-        override fun onMetricsSelection() {
-            selectionStep = SelectionStep.METRICS_SELECTION
+        override fun onDateSelectionStep() {
+            selectionStep = SelectionStep.DATE_SELECTION
         }
         override fun onBackToAssetsSelection() {
             selectionStep = SelectionStep.ASSETS_SELECTION
-        }
-        override fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection) {
-            metricsSelection = newMetricsSelection
         }
         override fun onAssetSelection(asset: String) {
             selectedAssets += asset
@@ -69,24 +66,27 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
             selectedAssets -= asset
         }
         override fun saveSelectionsToRepository(){
-            repository.updateSelection(selectedAssets,metricsSelection)
+            repository.updateSelection(selectedAssets , selectedDate!!)
+        }
+        override fun onDateSelection(date: Dates) {
+            selectedDate = date
         }
     }
 
     interface Actions {
         fun onInputChange(text: String)
-        fun onMetricsSelection()
+        fun onDateSelectionStep()
         fun onBackToAssetsSelection()
-        fun onMetricsSelectionChange(newMetricsSelection: MetricsSelection)
         fun onAssetSelection(asset: String)
         fun onAssetCancelSelection(asset: String)
         fun saveSelectionsToRepository()
+        fun onDateSelection(date : Dates)
     }
 }
 
 enum class SelectionStep {
     ASSETS_SELECTION,
-    METRICS_SELECTION
+    DATE_SELECTION
 }
 
 data class SelectionPageUiState(
@@ -95,15 +95,14 @@ data class SelectionPageUiState(
     val isLoading: Boolean = false,
     val assetNames: List<String> = emptyList(),
     val selectionStep: SelectionStep = SelectionStep.ASSETS_SELECTION,
-    val metricsSelection: MetricsSelection = MetricsSelection()
+    val selectedDate : Dates? = null
 )
 
-
-data class MetricsSelection(
-    val dailyRatePercent: Boolean = true,         // Дневной темп роста (%)
-    val monthlyRatePercent : Boolean = true,      // Месячная доходность (%)
-    val annualRatePercent: Boolean = true,        // Годовая доходность (% годовых, CAGR)
-    val totalPeriodReturnPercent: Boolean = true, // Рост тренда за весь период (%)
-    val maxDrawdownPercent : Boolean = true,        //максимальное падение (%)
-    val rSquared: Boolean = true,                  // Коэффициент детерминации R^2
-)
+enum class Dates(val value  : LocalDate){
+    WEEK(LocalDate.now().minusWeeks(1)),
+    MONTH(LocalDate.now().minusMonths(1)),
+    THREE_MONTHS(LocalDate.now().minusMonths(3)),
+    SIX_MONTHS(LocalDate.now().minusMonths(6)),
+    YEAR(LocalDate.now().minusYears(1)),
+    TWO_YEARS(LocalDate.now().minusYears(2))
+}

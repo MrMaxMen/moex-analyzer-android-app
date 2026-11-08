@@ -2,7 +2,7 @@ package com.moex_assets_analyzer.app
 
 import com.moex_assets_analyzer.app.entities.HistoryRecord
 import com.moex_assets_analyzer.app.entities.TrendResult
-import com.moex_assets_analyzer.app.viewmodels.MetricsSelection
+import com.moex_assets_analyzer.app.viewmodels.Dates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,16 +29,18 @@ class Repository(
     var selectedAssets: Set<String> = emptySet()
         private set
 
-    var metricsSelection: MetricsSelection = MetricsSelection()
+    var selectedDate : LocalDate? = null
         private set
 
-    fun updateSelection(assets: Set<String>, metrics: MetricsSelection) {
-        if (this.selectedAssets != assets) {
+
+    fun updateSelection(assets: Set<String>, date : Dates) {
+        if (this.selectedAssets != assets || this.selectedDate != date.value) {
             this.historiesCache = null
             this.trendsResultsCache = null
         }
         this.selectedAssets = assets
-        this.metricsSelection = metrics
+        this.selectedDate = date.value
+
     }
 
     suspend fun getAssetNames() = withContext(Dispatchers.IO){
@@ -46,18 +48,17 @@ class Repository(
     }
 
 
-    suspend fun getHistory(since: LocalDate = LocalDate.now().minusYears(1)) = withContext(Dispatchers.IO) {
-        historiesCache?: fetchAssetHistory(since).also { historiesCache = it }
-
+    suspend fun getHistory() = withContext(Dispatchers.IO) {
+        historiesCache?: fetchAssetHistory().also { historiesCache = it }
     }
 
-    private suspend fun fetchAssetHistory (since : LocalDate) : Map<String, List<HistoryRecord>> {
+    private suspend fun fetchAssetHistory () : Map<String, List<HistoryRecord>> {
         val semaphore = Semaphore(permits = 20)
         return coroutineScope {
             selectedAssets.map { asset ->
                 async {
                     semaphore.withPermit {
-                        asset to apiService.getAssetHistoryFor(asset, since)
+                        asset to apiService.getAssetHistoryFor(asset, selectedDate!!)
                     }
                 }
             }.awaitAll().toMap()
@@ -65,7 +66,7 @@ class Repository(
     }
 
     suspend fun getMetrics() = withContext(Dispatchers.Default) {
-        trendsResultsCache ?: getHistory().map { (asset, history) ->
+    trendsResultsCache ?: getHistory().map { (asset, history) ->
             calculateTrend(asset,history)
         }.also { trendsResultsCache = it }
     }

@@ -12,6 +12,7 @@ import com.moex_assets_analyzer.app.MaaApplication
 import com.moex_assets_analyzer.app.Repository
 import com.moex_assets_analyzer.app.entities.TrendResult
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class ResultsVM(private val repository: Repository) : ViewModel() {
     companion object {
@@ -39,7 +40,7 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
                 trendResultList = repository.getMetrics()
             } catch (e: Exception) {
                 e.printStackTrace()
-                errorMessage = e.localizedMessage ?: "Ошибка загрузки данных"
+                errorMessage = e.localizedMessage ?: "Error loading data"
             } finally {
                 isLoading = false
             }
@@ -50,12 +51,14 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
         get() = ResultsPageUiState(
             isLoading = isLoading,
             trendResultList = trendResultList,
-            errorMessage = errorMessage
+            errorMessage = errorMessage,
+            selectedDate = repository.selectedDate
         )
 }
 
 data class ResultsPageUiState(
     val isLoading: Boolean = false,
     val trendResultList: List<TrendResult> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val selectedDate: LocalDate? = null
 )
