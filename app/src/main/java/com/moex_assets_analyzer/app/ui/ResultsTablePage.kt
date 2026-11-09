@@ -3,12 +3,14 @@ package com.moex_assets_analyzer.app.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -53,9 +54,22 @@ import java.util.Locale
 fun Double.format(digits: Int = 4): String = String.format(Locale.US, "%.${digits}f", this)
 
 fun rateBackgroundColor(value: Double): Color = when {
-    value > 0 -> Color(0x334CAF50)
-    value < 0 -> Color(0x33F44336)
+    value > 0 -> GainGreen.copy(alpha = 0.2f)
+    value < 0 -> LossRed.copy(alpha = 0.2f)
     else -> Color.Transparent
+}
+
+@Composable
+fun rateFontColor(value: Double): Color = when {
+    value > 0 -> MaterialTheme.colorScheme.tertiary
+    value < 0 -> MaterialTheme.colorScheme.error
+    else -> MaterialTheme.colorScheme.onSurface
+}
+
+@Composable
+fun maxDrawdownFontColor(value: Double): Color = when {
+    value != 0.0 -> MaterialTheme.colorScheme.error
+    else -> MaterialTheme.colorScheme.onSurface
 }
 
 @Composable
@@ -114,18 +128,23 @@ fun ResultsTablePage(
 
     val horizontalScrollState = rememberScrollState()
 
-    val assetColumnWidth = 70.dp
+    val assetColumnWidth = 75.dp
     val metricColumnWidth = 94.dp
 
     CompositionLocalProvider(LocalOverscrollFactory provides null) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp)
+        ) {
             item {
                 ResultsHeaderSection(selectedDate = uiState.selectedDate)
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
             stickyHeader {
                 Surface(
-                    tonalElevation = 3.dp,
+                    color = MaterialTheme.colorScheme.background,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
@@ -134,58 +153,57 @@ fun ResultsTablePage(
                             text = "Asset",
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .width(assetColumnWidth)
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
-                        VerticalDivider()
 
                         Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
                             Text(
                                 "Daily",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
-                            VerticalDivider()
                             Text(
                                 "Monthly",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
-                            VerticalDivider()
                             Text(
                                 "Annual",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
-                            VerticalDivider()
                             Text(
                                 "Total",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
-                            VerticalDivider()
                             Text(
                                 "Max DD",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
-                            VerticalDivider()
                             Text(
                                 "R²",
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                         }
                     }
-                    HorizontalDivider()
                 }
                 HorizontalDivider()
             }
@@ -201,59 +219,55 @@ fun ResultsTablePage(
                         maxLines = 1,
                         modifier = Modifier
                             .width(assetColumnWidth)
-                            .horizontalScroll(rememberScrollState())
+                            .basicMarquee()
                             .padding(8.dp)
                     )
-
-                    VerticalDivider()
-                    VerticalDivider()
 
                     Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
                         Text(
                             text = "${item.dailyRatePercent.format(2)}%",
                             textAlign = TextAlign.Center,
+                            color = rateFontColor(item.dailyRatePercent),
                             modifier = Modifier
                                 .width(metricColumnWidth)
                                 .background(rateBackgroundColor(item.dailyRatePercent))
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
                         Text(
                             text = "${item.monthlyRatePercent.format(2)}%",
                             textAlign = TextAlign.Center,
+                            color = rateFontColor(item.monthlyRatePercent),
                             modifier = Modifier
                                 .width(metricColumnWidth)
                                 .background(rateBackgroundColor(item.monthlyRatePercent))
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
                         Text(
                             text = "${item.annualRatePercent.format(2)}%",
                             textAlign = TextAlign.Center,
+                            color = rateFontColor(item.annualRatePercent),
                             modifier = Modifier
                                 .width(metricColumnWidth)
                                 .background(rateBackgroundColor(item.annualRatePercent))
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
                         Text(
                             text = "${item.totalPeriodReturnPercent.format(2)}%",
                             textAlign = TextAlign.Center,
+                            color = rateFontColor(item.totalPeriodReturnPercent),
                             modifier = Modifier
                                 .width(metricColumnWidth)
                                 .background(rateBackgroundColor(item.totalPeriodReturnPercent))
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
                         Text(
                             text = "${item.maxDrawdownPercent.format(2)}%",
                             textAlign = TextAlign.Center,
+                            color = maxDrawdownFontColor(item.maxDrawdownPercent),
                             modifier = Modifier
                                 .width(metricColumnWidth)
-                                .background(rateBackgroundColor(-item.maxDrawdownPercent.coerceAtLeast(0.0).let { if (item.maxDrawdownPercent > 0) -item.maxDrawdownPercent else item.maxDrawdownPercent }))
                                 .padding(8.dp)
                         )
-                        VerticalDivider()
                         Text(
                             text = item.rSquared.format(2),
                             textAlign = TextAlign.Center,
@@ -273,8 +287,7 @@ fun ResultsHeaderSection(selectedDate: LocalDate?) {
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
