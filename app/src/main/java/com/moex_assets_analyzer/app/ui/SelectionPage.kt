@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -36,6 +37,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -46,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -75,7 +78,7 @@ fun SelectionPagePreview() {
                     uiState = SelectionPageUiState(
                         userInput = "",
                         assetNames = listOf("AMFL", "AKMM", "LQDT"),
-                        selectionStep = SelectionStep.ASSETS_SELECTION,
+                        selectionStep = SelectionStep.DATE_SELECTION,
                         selectedAssets = setOf("AMFL")
                     ),
                     onNext = {}
@@ -358,13 +361,29 @@ private fun DateSelectionScreen(
                 Spacer(Modifier.fillMaxWidth().height(50.dp))
 
                 dates.forEach {
-                    Button(
-                        onClick = {
-                            actions?.onDateSelection(it)
-                        }
-                    ) {
+                    val isSelected = (selectedDate == it)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(70.dp)
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .selectable(
+                                selected = isSelected,
+                                onClick = { actions?.onDateSelection(it) },
+                            )
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = null
+                        )
+                        Spacer(Modifier.weight(1f))
                         Text(it.toString())
+
                     }
+
                 }
 
             }
