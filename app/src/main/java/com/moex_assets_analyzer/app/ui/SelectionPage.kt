@@ -13,10 +13,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -50,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +80,7 @@ fun SelectionPagePreview() {
                     uiState = SelectionPageUiState(
                         userInput = "",
                         assetNames = listOf("AMFL", "AKMM", "LQDT"),
-                        selectionStep = SelectionStep.DATE_SELECTION,
+                        selectionStep = SelectionStep.ASSETS_SELECTION,
                         selectedAssets = setOf("AMFL")
                     ),
                     onNext = {}
@@ -122,7 +124,7 @@ fun SelectionPage(
         ) {
             when (uiState.selectionStep) {
                 SelectionStep.ASSETS_SELECTION -> {
-                    AssetsSelectionScreen(
+                    AssetsSelectionStep(
                         uiState = uiState,
                         actions = actions,
                         modifier = Modifier.weight(1f)
@@ -130,7 +132,7 @@ fun SelectionPage(
                 }
 
                 SelectionStep.DATE_SELECTION -> {
-                    DateSelectionScreen(
+                    DateSelectionStep(
                         actions = actions,
                         modifier = Modifier.weight(1f),
                         onNext = onNext,
@@ -145,24 +147,27 @@ fun SelectionPage(
 
 
 @Composable
-private fun AssetsSelectionScreen(
+private fun AssetsSelectionStep(
     uiState: SelectionPageUiState,
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier
 ) {
     val isInspectionMode = LocalInspectionMode.current
     var isTextFieldFocus by remember { mutableStateOf(false) }
-    val isSearchActive = (isTextFieldFocus && !isInspectionMode) || uiState.userInput.isNotEmpty()
+    val isSearchActive = (isTextFieldFocus && isInspectionMode) || uiState.userInput.isNotEmpty()
 
     val selectedAssets = uiState.selectedAssets
+
     val filteredAssets = uiState.assetNames
         .filter { it !in selectedAssets }
         .filter { it.contains(uiState.userInput, ignoreCase = true) }
+
 
     val topSpacerHeight by animateDpAsState(
         targetValue = if (isSearchActive) 0.dp else 180.dp,
         animationSpec = tween(durationMillis = 600)
     )
+
 
     val middleSpacerHeight by animateDpAsState(
         targetValue = if (isSearchActive) 0.dp else 140.dp,
@@ -175,39 +180,9 @@ private fun AssetsSelectionScreen(
     ) {
         Spacer(modifier = Modifier.height(topSpacerHeight))
 
-        AnimatedVisibility(
-            visible = !isSearchActive,
-            enter = fadeIn(animationSpec = tween(600)) + expandVertically(tween(600)),
-            exit = fadeOut(animationSpec = tween(600)) + shrinkVertically(tween(600))
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Welcome to",
-                    fontSize = 23.sp,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Moex Analyzer",
-                    fontSize = 43.sp,
-                    textAlign = TextAlign.Center
-                )
-                HorizontalDivider(
-                    modifier = Modifier
-                        .width(283.dp)
-                        ,
-                    thickness = 3.dp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
+        WelcomeHeader(visible = !isSearchActive)
 
-        Spacer(
-            modifier = Modifier
-                .height(middleSpacerHeight)
-                .fillMaxWidth()
-        )
+        Spacer(modifier = Modifier.height(middleSpacerHeight))
 
         TextField(
             modifier = Modifier
@@ -235,33 +210,12 @@ private fun AssetsSelectionScreen(
                     .fillMaxSize()
                     .padding(horizontal = 30.dp)
             ) {
-                items(
-                    items = selectedAssets.toList(),
-                    key = { "selected_$it" }
-                ) { assetName ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                            .background(Color.Green),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = assetName,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 15.dp)
+                if (selectedAssets.isNotEmpty()) {
+                    item(key = "selected_assets_flow") {
+                        SelectedAssetsSection(
+                            selectedAssets = selectedAssets,
+                            onRemoveAsset = { actions?.onAssetCancelSelection(it) }
                         )
-
-                        IconButton(
-                            onClick = { actions?.onAssetCancelSelection(assetName) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "remove asset"
-                            )
-                        }
                     }
                 }
 
@@ -272,6 +226,9 @@ private fun AssetsSelectionScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(vertical = 15.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(onClick = {actions?.onAssetSelection(assetName)})
                             .animateItem(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -283,14 +240,11 @@ private fun AssetsSelectionScreen(
                                 .padding(start = 15.dp)
                         )
 
-                        IconButton(
-                            onClick = { actions?.onAssetSelection(assetName) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "add asset"
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "add asset"
+                        )
+
                     }
                 }
             }
@@ -325,9 +279,86 @@ private fun AssetsSelectionScreen(
 }
 
 
+@Composable
+private fun WelcomeHeader(
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(600)) + expandVertically(tween(600)),
+        exit = fadeOut(animationSpec = tween(600)) + shrinkVertically(tween(600)),
+        modifier = modifier
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Welcome to",
+                fontSize = 23.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Moex Analyzer",
+                fontSize = 43.sp,
+                textAlign = TextAlign.Center
+            )
+            HorizontalDivider(
+                modifier = Modifier.width(283.dp),
+                thickness = 3.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
 
 @Composable
-private fun DateSelectionScreen(
+fun SelectedAssetsSection(
+    selectedAssets: Set<String>,
+    onRemoveAsset: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (selectedAssets.isEmpty()) return
+
+    FlowRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        selectedAssets.forEach { assetName ->
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 2.dp, bottom = 2.dp)
+                ) {
+                    Text(
+                        text = assetName,
+                        fontSize = 14.sp
+                    )
+                    IconButton(
+                        onClick = { onRemoveAsset(assetName) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Remove $assetName",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateSelectionStep(
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier,
     selectedDate: Dates?,
