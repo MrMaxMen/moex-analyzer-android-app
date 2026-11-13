@@ -48,3 +48,10 @@ Desktop.ini
 
 # Log files
 *.log
+
+
+# Misc
+*.hprof
+app/release/
+app/debug/
+lint-results*
