@@ -50,8 +50,6 @@ android {
     buildFeatures {
         compose = true
     }
-
-
 }
 
 base.archivesName.set("MoexAnalyzer-v${android.defaultConfig.versionName}")
