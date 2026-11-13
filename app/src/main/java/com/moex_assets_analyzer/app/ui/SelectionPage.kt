@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
@@ -51,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
@@ -80,7 +82,7 @@ fun SelectionPagePreview() {
                     uiState = SelectionPageUiState(
                         userInput = "",
                         assetNames = listOf("AMFL", "AKMM", "LQDT"),
-                        selectionStep = SelectionStep.ASSETS_SELECTION,
+                        selectionStep = SelectionStep.DATE_SELECTION,
                         selectedAssets = setOf("AMFL")
                     ),
                     onNext = {}
@@ -101,6 +103,7 @@ fun SelectionPageRoute(
         onNext = onNext
     )
 }
+
 
 
 
@@ -136,7 +139,8 @@ fun SelectionPage(
                         actions = actions,
                         modifier = Modifier.weight(1f),
                         onNext = onNext,
-                        selectedDate = uiState.selectedDate
+                        selectedDate = uiState.selectedDate,
+                        selectedAssets = uiState.selectedAssets
                     )
                 }
             }
@@ -152,9 +156,16 @@ private fun AssetsSelectionStep(
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier
 ) {
+
+
     val isInspectionMode = LocalInspectionMode.current
     var isTextFieldFocus by remember { mutableStateOf(false) }
     val isSearchActive = (isTextFieldFocus && isInspectionMode) || uiState.userInput.isNotEmpty()
+
+    BackHandler {
+        isTextFieldFocus = false
+        actions?.onInputChange("")
+    }
 
     val selectedAssets = uiState.selectedAssets
 
@@ -312,8 +323,10 @@ private fun WelcomeHeader(
     }
 }
 
+
+
 @Composable
-fun SelectedAssetsSection(
+ fun SelectedAssetsSection(
     selectedAssets: Set<String>,
     onRemoveAsset: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -357,12 +370,14 @@ fun SelectedAssetsSection(
     }
 }
 
+
 @Composable
 private fun DateSelectionStep(
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier,
     selectedDate: Dates?,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    selectedAssets: Set<String>
 ) {
     val context = LocalContext.current
     val dates = Dates.entries.toList()
@@ -372,24 +387,89 @@ private fun DateSelectionStep(
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .padding(start = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            IconButton(
+                onClick = { actions?.onBackToAssetsSelection() }
+            ){
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "go back"
+
+                )
+            }
+
+            Text(
+                text = "Select date",
+                fontSize = 23.sp
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 50.dp),
+                modifier = Modifier.padding(horizontal = 30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
                 Text(
-                    text = "Records Since: ${selectedDate ?: "not selected"}",
-                    Modifier.padding(bottom = 50.dp)
+                    text = "Assets (${selectedAssets.size})",
+                    modifier = Modifier
+                        .alpha(0.7f)
+                        .align(Alignment.Start)
                 )
 
-                Spacer(Modifier.fillMaxWidth().height(50.dp))
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    selectedAssets.forEach { assetName ->
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    text = assetName,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+
+                Text(
+                    text = "Records Since:",
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                )
+
+                Spacer(Modifier.fillMaxWidth().height(30.dp))
 
                 dates.forEach {
                     val isSelected = (selectedDate == it)
@@ -410,8 +490,14 @@ private fun DateSelectionStep(
                             selected = isSelected,
                             onClick = null
                         )
+                        Text(
+                            text = it.value.toString(),
+                            modifier = Modifier
+                                .alpha(0.4f)
+                                .padding(start = 5.dp)
+                        )
                         Spacer(Modifier.weight(1f))
-                        Text(it.toString())
+                        Text(it.text)
 
                     }
 

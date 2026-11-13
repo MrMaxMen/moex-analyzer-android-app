@@ -98,11 +98,11 @@ data class SelectionPageUiState(
     val selectedDate : Dates? = null
 )
 
-enum class Dates(val value  : LocalDate){
-    WEEK(LocalDate.now().minusWeeks(1)),
-    MONTH(LocalDate.now().minusMonths(1)),
-    THREE_MONTHS(LocalDate.now().minusMonths(3)),
-    SIX_MONTHS(LocalDate.now().minusMonths(6)),
-    YEAR(LocalDate.now().minusYears(1)),
-    TWO_YEARS(LocalDate.now().minusYears(2))
+enum class Dates(val value: LocalDate, val text: String) {
+    WEEK(LocalDate.now().minusWeeks(1), "1 Week"),
+    MONTH(LocalDate.now().minusMonths(1), "1 Month"),
+    THREE_MONTHS(LocalDate.now().minusMonths(3), "3 Months"),
+    SIX_MONTHS(LocalDate.now().minusMonths(6), "6 Months"),
+    YEAR(LocalDate.now().minusYears(1), "1 Year"),
+    TWO_YEARS(LocalDate.now().minusYears(2), "2 Years")
 }
