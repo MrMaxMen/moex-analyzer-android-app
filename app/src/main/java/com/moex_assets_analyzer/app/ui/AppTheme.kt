@@ -32,7 +32,8 @@ private val AppColorScheme = lightColorScheme(
     error = LossRed,
     onError = Color.White,
     outline = Mist,
-    outlineVariant = Mist
+    outlineVariant = Mist,
+    primaryContainer = Color(0xFFBBC7FF)
 )
 
 @Composable
