@@ -37,7 +37,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,10 +62,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.moex_assets_analyzer.app.R
+import com.moex_assets_analyzer.app.others.LocaleHelper
 import com.moex_assets_analyzer.app.viewmodels.Dates
 import com.moex_assets_analyzer.app.viewmodels.SelectionPageUiState
 import com.moex_assets_analyzer.app.viewmodels.SelectionStep
@@ -84,7 +91,7 @@ fun SelectionPagePreview() {
                     uiState = SelectionPageUiState(
                         userInput = "",
                         assetNames = listOf("AMFL", "AKMM", "LQDT"),
-                        selectionStep = SelectionStep.DATE_SELECTION,
+                        selectionStep = SelectionStep.ASSETS_SELECTION,
                         selectedAssets = setOf("AMFL")
                     ),
                     onNext = {}
@@ -150,6 +157,38 @@ fun SelectionPage(
     }
 }
 
+@Composable
+fun LanguageToggleButton(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val isRussian = LocaleHelper.isRussian(context)
+    Surface(
+        onClick = { LocaleHelper.toggleLanguage(context) },
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Language,
+                contentDescription = stringResource(R.string.language_toggle_desc),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = if (isRussian) "EN" else "RU",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 
 
 @Composable
@@ -158,11 +197,51 @@ private fun AssetsSelectionStep(
     actions: SelectionVM.Actions?,
     modifier: Modifier = Modifier
 ) {
+    if (uiState.isLoading) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
+    if (uiState.errorMessage != null) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.WifiOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(56.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uiState.errorMessage,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = { actions?.onRetryLoadAssetNames() }) {
+                    Text(stringResource(R.string.btn_retry))
+                }
+            }
+        }
+        return
+    }
 
     val isInspectionMode = LocalInspectionMode.current
     var isTextFieldFocus by remember { mutableStateOf(false) }
-    val isSearchActive = (isTextFieldFocus && isInspectionMode) || uiState.userInput.isNotEmpty()
+    val isSearchActive = (isTextFieldFocus && !isInspectionMode) || uiState.userInput.isNotEmpty()
 
     BackHandler {
         isTextFieldFocus = false
@@ -187,106 +266,119 @@ private fun AssetsSelectionStep(
         animationSpec = tween(durationMillis = 600)
     )
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(topSpacerHeight))
-
-        WelcomeHeader(visible = !isSearchActive)
-
-        Spacer(modifier = Modifier.height(middleSpacerHeight))
-
-        TextField(
-            modifier = Modifier
-                .padding(horizontal = 30.dp)
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    isTextFieldFocus = focusState.isFocused
-                },
-            placeholder = {
-                Text("Enter asset name")
-            },
-            shape = RoundedCornerShape(12.dp),
-            value = uiState.userInput,
-            onValueChange = { actions?.onInputChange(it) }
-        )
-
-        AnimatedVisibility(
-            visible = isSearchActive,
-            modifier = Modifier.weight(1f),
-            enter = fadeIn(animationSpec = tween(600)) + expandVertically(tween(600)),
-            exit = fadeOut(animationSpec = tween(600)) + shrinkVertically(tween(600))
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LazyColumn(
+            Spacer(modifier = Modifier.height(topSpacerHeight))
+
+            WelcomeHeader(visible = !isSearchActive)
+
+            Spacer(modifier = Modifier.height(middleSpacerHeight))
+
+            TextField(
                 modifier = Modifier
-                    .fillMaxSize()
                     .padding(horizontal = 30.dp)
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        isTextFieldFocus = focusState.isFocused
+                    },
+                placeholder = {
+                    Text(stringResource(R.string.search_placeholder))
+                },
+                shape = RoundedCornerShape(12.dp),
+                value = uiState.userInput,
+                onValueChange = { actions?.onInputChange(it) }
+            )
+
+            AnimatedVisibility(
+                visible = isSearchActive,
+                modifier = Modifier.weight(1f),
+                enter = fadeIn(animationSpec = tween(600)) + expandVertically(tween(600)),
+                exit = fadeOut(animationSpec = tween(600)) + shrinkVertically(tween(600))
             ) {
-                if (selectedAssets.isNotEmpty()) {
-                    item(key = "selected_assets_flow") {
-                        SelectedAssetsSection(
-                            selectedAssets = selectedAssets,
-                            onRemoveAsset = { actions?.onAssetCancelSelection(it) }
-                        )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 30.dp)
+                ) {
+                    if (selectedAssets.isNotEmpty()) {
+                        item(key = "selected_assets_flow") {
+                            SelectedAssetsSection(
+                                selectedAssets = selectedAssets,
+                                onRemoveAsset = { actions?.onAssetCancelSelection(it) }
+                            )
+                        }
+                    }
+
+                    items(
+                        items = filteredAssets,
+                        key = { "search_$it" }
+                    ) { assetName ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 15.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(onClick = {actions?.onAssetSelection(assetName)})
+                                .animateItem(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = assetName,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 15.dp)
+                            )
+
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(R.string.content_desc_add_asset)
+                            )
+
+                        }
                     }
                 }
+            }
 
-                items(
-                    items = filteredAssets,
-                    key = { "search_$it" }
-                ) { assetName ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 15.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable(onClick = {actions?.onAssetSelection(assetName)})
-                            .animateItem(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = assetName,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 15.dp)
-                        )
-
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "add asset"
-                        )
-
-                    }
+            AnimatedVisibility(
+                visible = isSearchActive && selectedAssets.isNotEmpty(),
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(animationSpec = tween(300)),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(250)
+                ) + fadeOut(animationSpec = tween(250))
+            ) {
+                Button(
+                    onClick = { actions?.onDateSelectionStep() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .padding(horizontal = 25.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.btn_next))
                 }
             }
         }
 
         AnimatedVisibility(
-            visible = isSearchActive && selectedAssets.isNotEmpty(),
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(250)
-            ) + fadeOut(animationSpec = tween(250))
+            visible = !isSearchActive,
+            enter = fadeIn(animationSpec = tween(600)),
+            exit = fadeOut(animationSpec = tween(600)),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 12.dp, end = 16.dp)
         ) {
-            Button(
-                onClick = { actions?.onDateSelectionStep() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .padding(horizontal = 25.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Next")
-            }
+            LanguageToggleButton()
         }
     }
 }
@@ -307,17 +399,17 @@ private fun WelcomeHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Welcome to",
+                text = stringResource(R.string.welcome_to),
                 fontSize = 23.sp,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Moex Analyzer",
+                text = stringResource(R.string.app_name),
                 fontSize = 43.sp,
                 textAlign = TextAlign.Center
             )
             HorizontalDivider(
-                modifier = Modifier.width(283.dp),
+                modifier = Modifier.width(285.dp),
                 thickness = 3.dp,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -362,7 +454,7 @@ private fun WelcomeHeader(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Remove $assetName",
+                            contentDescription = stringResource(R.string.content_desc_remove_asset, assetName),
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -407,13 +499,13 @@ private fun DateSelectionStep(
             ){
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "go back"
+                    contentDescription = stringResource(R.string.content_desc_go_back)
 
                 )
             }
 
             Text(
-                text = "Select date",
+                text = stringResource(R.string.select_date_title),
                 fontSize = 23.sp
             )
         }
@@ -432,7 +524,7 @@ private fun DateSelectionStep(
             ) {
 
                 Text(
-                    text = "Assets (${selectedAssets.size})",
+                    text = stringResource(R.string.assets_count, selectedAssets.size),
                     modifier = Modifier
                         .alpha(0.7f)
                         .align(Alignment.Start)
@@ -468,7 +560,7 @@ private fun DateSelectionStep(
 
 
                 Text(
-                    text = "Records Since:",
+                    text = stringResource(R.string.records_since),
                     modifier = Modifier
                         .align(Alignment.Start)
                 )
@@ -501,7 +593,7 @@ private fun DateSelectionStep(
                                 .padding(start = 5.dp)
                         )
                         Spacer(Modifier.weight(1f))
-                        Text(it.text)
+                        Text(text = stringResource(it.textResId))
 
                     }
 
@@ -518,7 +610,7 @@ private fun DateSelectionStep(
                     actions?.saveSelectionsToRepository()
                     onNext()
                 } else {
-                    Toast.makeText(context, "Please select a date", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.toast_select_date, Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
@@ -527,7 +619,7 @@ private fun DateSelectionStep(
                 .padding(horizontal = 25.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Analyze")
+            Text(stringResource(R.string.btn_analyze))
         }
     }
 }

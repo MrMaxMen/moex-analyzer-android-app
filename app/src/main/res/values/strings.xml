@@ -1,3 +1,44 @@
 <resources>
-    <string name="app_name">Moex Analyser</string>
+    <string name="app_name">Moex Analyzer</string>
+    <string name="welcome_to">Welcome to</string>
+    <string name="search_placeholder">Enter asset name</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_retry">Retry</string>
+    <string name="btn_analyze">Analyze</string>
+    <string name="content_desc_add_asset">Add asset</string>
+    <string name="content_desc_remove_asset">Remove %1$s</string>
+    <string name="content_desc_go_back">Go back</string>
+    <string name="select_date_title">Select date</string>
+    <string name="assets_count">Assets (%1$d)</string>
+    <string name="records_since">Records Since:</string>
+    <string name="toast_select_date">Please select a date</string>
+    <string name="language_toggle_desc">Switch language</string>
+
+    <!-- Dates enum -->
+    <string name="date_1_week">1 Week</string>
+    <string name="date_1_month">1 Month</string>
+    <string name="date_3_months">3 Months</string>
+    <string name="date_6_months">6 Months</string>
+    <string name="date_1_year">1 Year</string>
+    <string name="date_2_years">2 Years</string>
+
+    <!-- Results Table -->
+    <string name="col_asset">Asset</string>
+    <string name="col_daily">Daily</string>
+    <string name="col_monthly">Monthly</string>
+    <string name="col_annual">Annual</string>
+    <string name="col_total">Total</string>
+    <string name="col_max_dd">Max DD</string>
+    <string name="col_r_squared">R²</string>
+    <string name="analysis_start_date">Analysis Start Date</string>
+    <string name="date_not_specified">Not specified</string>
+    <string name="metrics_info">Metrics Info</string>
+    <string name="hide_info">Hide Info</string>
+    <string name="metrics_guide">Metrics Guide</string>
+    <string name="desc_daily">Daily growth rate (%) from log-linear trend slope.</string>
+    <string name="desc_monthly">Projected monthly return (%) compounding 30 days.</string>
+    <string name="desc_annual">Annualized return (% CAGR) calculated from trend.</string>
+    <string name="desc_total">Cumulative trend growth (%) over the whole period.</string>
+    <string name="desc_max_dd">Maximum drawdown (%) peak-to-trough drop.</string>
+    <string name="desc_r_squared">Coefficient of determination (0 to 1) for trend fit.</string>
 </resources>

@@ -17,7 +17,7 @@ class MaaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appScope.launch {
-            repository.getAssetNames()
+            runCatching { repository.getAssetNames() }
         }
     }
 }

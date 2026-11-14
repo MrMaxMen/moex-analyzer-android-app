@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,10 +44,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.moex_assets_analyzer.app.R
 import com.moex_assets_analyzer.app.viewmodels.ResultsPageUiState
 import com.moex_assets_analyzer.app.viewmodels.ResultsVM
 import java.time.LocalDate
@@ -97,12 +102,16 @@ fun ResultsTablePagePreview() {
 
 @Composable
 fun ResultsTablePageRout(vm: ResultsVM) {
-    ResultsTablePage(vm.uiState)
+    ResultsTablePage(
+        uiState = vm.uiState,
+        onRetry = { vm.loadMetrics() }
+    )
 }
 
 @Composable
 fun ResultsTablePage(
-    uiState: ResultsPageUiState
+    uiState: ResultsPageUiState,
+    onRetry: (() -> Unit)? = null
 ) {
     val trendResult = uiState.trendResultList
 
@@ -121,7 +130,31 @@ fun ResultsTablePage(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = uiState.errorMessage)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.WifiOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(56.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uiState.errorMessage,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (onRetry != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onRetry) {
+                        Text(stringResource(R.string.btn_retry))
+                    }
+                }
+            }
         }
         return
     }
@@ -150,7 +183,7 @@ fun ResultsTablePage(
                     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
 
                         Text(
-                            text = "Asset",
+                            text = stringResource(R.string.col_asset),
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -161,42 +194,42 @@ fun ResultsTablePage(
 
                         Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
                             Text(
-                                "Daily",
+                                stringResource(R.string.col_daily),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                             Text(
-                                "Monthly",
+                                stringResource(R.string.col_monthly),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                             Text(
-                                "Annual",
+                                stringResource(R.string.col_annual),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                             Text(
-                                "Total",
+                                stringResource(R.string.col_total),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                             Text(
-                                "Max DD",
+                                stringResource(R.string.col_max_dd),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.width(metricColumnWidth).padding(8.dp)
                             )
                             Text(
-                                "R²",
+                                stringResource(R.string.col_r_squared),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -311,13 +344,13 @@ fun ResultsHeaderSection(selectedDate: LocalDate?) {
                     )
                     Column {
                         Text(
-                            text = "Analysis Start Date",
+                            text = stringResource(R.string.analysis_start_date),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = selectedDate?.format(DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.US))
-                                ?: "Not specified",
+                            text = selectedDate?.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault()))
+                                ?: stringResource(R.string.date_not_specified),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -332,7 +365,7 @@ fun ResultsHeaderSection(selectedDate: LocalDate?) {
                         contentDescription = null,
                         modifier = Modifier.padding(end = 4.dp)
                     )
-                    Text(if (isExplanationExpanded) "Hide Info" else "Metrics Info")
+                    Text(if (isExplanationExpanded) stringResource(R.string.hide_info) else stringResource(R.string.metrics_info))
                 }
             }
 
@@ -344,35 +377,35 @@ fun ResultsHeaderSection(selectedDate: LocalDate?) {
                 ) {
                     HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
                     Text(
-                        text = "Metrics Guide",
+                        text = stringResource(R.string.metrics_guide),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                     MetricExplanationItem(
-                        title = "Daily",
-                        description = "Daily growth rate (%) from log-linear trend slope."
+                        title = stringResource(R.string.col_daily),
+                        description = stringResource(R.string.desc_daily)
                     )
                     MetricExplanationItem(
-                        title = "Monthly",
-                        description = "Projected monthly return (%) compounding 30 days."
+                        title = stringResource(R.string.col_monthly),
+                        description = stringResource(R.string.desc_monthly)
                     )
                     MetricExplanationItem(
-                        title = "Annual",
-                        description = "Annualized return (% CAGR) calculated from trend."
+                        title = stringResource(R.string.col_annual),
+                        description = stringResource(R.string.desc_annual)
                     )
                     MetricExplanationItem(
-                        title = "Total",
-                        description = "Cumulative trend growth (%) over the whole period."
+                        title = stringResource(R.string.col_total),
+                        description = stringResource(R.string.desc_total)
                     )
                     MetricExplanationItem(
-                        title = "Max DD",
-                        description = "Maximum drawdown (%) peak-to-trough drop."
+                        title = stringResource(R.string.col_max_dd),
+                        description = stringResource(R.string.desc_max_dd)
                     )
                     MetricExplanationItem(
-                        title = "R²",
-                        description = "Coefficient of determination (0 to 1) for trend fit."
+                        title = stringResource(R.string.col_r_squared),
+                        description = stringResource(R.string.desc_r_squared)
                     )
                 }
             }

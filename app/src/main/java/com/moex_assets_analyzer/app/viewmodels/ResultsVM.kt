@@ -40,7 +40,7 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
                 trendResultList = repository.getMetrics()
             } catch (e: Exception) {
                 e.printStackTrace()
-                errorMessage = e.localizedMessage ?: "Error loading data"
+                errorMessage = e.localizedMessage ?: "Failed to connect to MOEX server. Check internet connection."
             } finally {
                 isLoading = false
             }

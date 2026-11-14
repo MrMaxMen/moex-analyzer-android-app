@@ -26,24 +26,36 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
     private var userInput by mutableStateOf("")
     private var selectedAssets by mutableStateOf<Set<String>>(emptySet())
     private var isLoading by mutableStateOf(false)
+    private var errorMessage by mutableStateOf<String?>(null)
     private var selectionStep by mutableStateOf(SelectionStep.ASSETS_SELECTION)
     private var selectedDate by mutableStateOf<Dates?>(null)
     private var assetNames by mutableStateOf<List<String>>(emptyList())
 
     init {
-        viewModelScope.launch {
-            isLoading = true
-            assetNames = repository.getAssetNames()
-            isLoading = false
-        }
+        loadAssetNames()
     }
 
+    fun loadAssetNames() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                assetNames = repository.getAssetNames()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                errorMessage = e.localizedMessage ?: "Failed to connect to MOEX server."
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 
     val uiState: SelectionPageUiState
         get() = SelectionPageUiState(
             userInput = userInput,
             selectedAssets = selectedAssets,
             isLoading = isLoading,
+            errorMessage = errorMessage,
             assetNames = assetNames,
             selectionStep = selectionStep,
             selectedDate = selectedDate
@@ -65,11 +77,14 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
         override fun onAssetCancelSelection(asset: String) {
             selectedAssets -= asset
         }
-        override fun saveSelectionsToRepository(){
-            repository.updateSelection(selectedAssets , selectedDate!!)
+        override fun saveSelectionsToRepository() {
+            repository.updateSelection(selectedAssets, selectedDate!!)
         }
         override fun onDateSelection(date: Dates) {
             selectedDate = date
+        }
+        override fun onRetryLoadAssetNames() {
+            loadAssetNames()
         }
     }
 
@@ -80,7 +95,8 @@ class SelectionVM(private val repository: Repository) : ViewModel() {
         fun onAssetSelection(asset: String)
         fun onAssetCancelSelection(asset: String)
         fun saveSelectionsToRepository()
-        fun onDateSelection(date : Dates)
+        fun onDateSelection(date: Dates)
+        fun onRetryLoadAssetNames()
     }
 }
 
@@ -93,16 +109,21 @@ data class SelectionPageUiState(
     val userInput: String = "",
     val selectedAssets: Set<String> = emptySet(),
     val isLoading: Boolean = false,
+    val errorMessage: String? = null,
     val assetNames: List<String> = emptyList(),
     val selectionStep: SelectionStep = SelectionStep.ASSETS_SELECTION,
-    val selectedDate : Dates? = null
+    val selectedDate: Dates? = null
 )
 
-enum class Dates(val value: LocalDate, val text: String) {
-    WEEK(LocalDate.now().minusWeeks(1), "1 Week"),
-    MONTH(LocalDate.now().minusMonths(1), "1 Month"),
-    THREE_MONTHS(LocalDate.now().minusMonths(3), "3 Months"),
-    SIX_MONTHS(LocalDate.now().minusMonths(6), "6 Months"),
-    YEAR(LocalDate.now().minusYears(1), "1 Year"),
-    TWO_YEARS(LocalDate.now().minusYears(2), "2 Years")
+enum class Dates(
+    val value: LocalDate,
+    @androidx.annotation.StringRes val textResId: Int,
+    val text: String
+) {
+    WEEK(LocalDate.now().minusWeeks(1), com.moex_assets_analyzer.app.R.string.date_1_week, "1 Week"),
+    MONTH(LocalDate.now().minusMonths(1), com.moex_assets_analyzer.app.R.string.date_1_month, "1 Month"),
+    THREE_MONTHS(LocalDate.now().minusMonths(3), com.moex_assets_analyzer.app.R.string.date_3_months, "3 Months"),
+    SIX_MONTHS(LocalDate.now().minusMonths(6), com.moex_assets_analyzer.app.R.string.date_6_months, "6 Months"),
+    YEAR(LocalDate.now().minusYears(1), com.moex_assets_analyzer.app.R.string.date_1_year, "1 Year"),
+    TWO_YEARS(LocalDate.now().minusYears(2), com.moex_assets_analyzer.app.R.string.date_2_years, "2 Years")
 }

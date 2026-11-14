@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">Moex Analyzer</string>
+    <string name="welcome_to">Добро пожаловать в</string>
+    <string name="search_placeholder">Введите название актива</string>
+    <string name="btn_next">Далее</string>
+    <string name="btn_retry">Повторить</string>
+    <string name="btn_analyze">Анализировать</string>
+    <string name="content_desc_add_asset">Добавить актив</string>
+    <string name="content_desc_remove_asset">Удалить %1$s</string>
+    <string name="content_desc_go_back">Назад</string>
+    <string name="select_date_title">Выберите период</string>
+    <string name="assets_count">Активы (%1$d)</string>
+    <string name="records_since">Данные начиная с:</string>
+    <string name="toast_select_date">Пожалуйста, выберите дату</string>
+    <string name="language_toggle_desc">Сменить язык</string>
+
+    <!-- Dates enum -->
+    <string name="date_1_week">1 неделя</string>
+    <string name="date_1_month">1 месяц</string>
+    <string name="date_3_months">3 месяца</string>
+    <string name="date_6_months">6 месяцев</string>
+    <string name="date_1_year">1 год</string>
+    <string name="date_2_years">2 года</string>
+
+    <!-- Results Table -->
+    <string name="col_asset">Актив</string>
+    <string name="col_daily">День</string>
+    <string name="col_monthly">Месяц</string>
+    <string name="col_annual">Год</string>
+    <string name="col_total">Итого</string>
+    <string name="col_max_dd">Макс. просадка</string>
+    <string name="col_r_squared">R²</string>
+    <string name="analysis_start_date">Дата начала анализа</string>
+    <string name="date_not_specified">Не указана</string>
+    <string name="metrics_info">О метриках</string>
+    <string name="hide_info">Скрыть</string>
+    <string name="metrics_guide">Справка по метрикам</string>
+    <string name="desc_daily">Дневной темп роста (%) по наклону лог-линейного тренда.</string>
+    <string name="desc_monthly">Ожидаемая доходность за месяц (%) с капитализацией за 30 дней.</string>
+    <string name="desc_annual">Годовая доходность (% CAGR), рассчитанная по тренду.</string>
+    <string name="desc_total">Совокупный рост по тренду (%) за весь выбранный период.</string>
+    <string name="desc_max_dd">Максимальная просадка (%) от пика до локального минимума.</string>
+    <string name="desc_r_squared">Коэффициент детерминации (от 0 до 1), точность аппроксимации тренда.</string>
+</resources>
