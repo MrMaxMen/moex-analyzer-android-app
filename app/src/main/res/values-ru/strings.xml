@@ -28,7 +28,7 @@
     <string name="col_monthly">Месяц</string>
     <string name="col_annual">Год</string>
     <string name="col_total">Итого</string>
-    <string name="col_max_dd">Макс. просадка</string>
+    <string name="col_max_dd">М.П.</string>
     <string name="col_r_squared">R²</string>
     <string name="analysis_start_date">Дата начала анализа</string>
     <string name="date_not_specified">Не указана</string>

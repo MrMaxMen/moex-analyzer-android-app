@@ -38,7 +38,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -208,34 +207,11 @@ private fun AssetsSelectionStep(
     }
 
     if (uiState.errorMessage != null) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(24.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.WifiOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = uiState.errorMessage,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { actions?.onRetryLoadAssetNames() }) {
-                    Text(stringResource(R.string.btn_retry))
-                }
-            }
-        }
+        ConnectionErrorScreen(
+            errorMessage = uiState.errorMessage,
+            modifier = modifier,
+            onRetry = { actions?.onRetryLoadAssetNames() }
+        )
         return
     }
 
@@ -409,7 +385,7 @@ private fun WelcomeHeader(
                 textAlign = TextAlign.Center
             )
             HorizontalDivider(
-                modifier = Modifier.width(285.dp),
+                modifier = Modifier.width(290.dp),
                 thickness = 3.dp,
                 color = MaterialTheme.colorScheme.primary
             )
