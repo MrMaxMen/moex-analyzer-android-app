@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.moex_assets_analyzer.app.R
@@ -98,188 +100,249 @@ fun ResultsTablePagePreview() {
 }
 
 @Composable
-fun ResultsTablePageRout(vm: ResultsVM) {
+fun ResultsTablePageRout(
+    vm: ResultsVM,
+    onBack: (() -> Unit)? = null
+) {
     ResultsTablePage(
         uiState = vm.uiState,
-        onRetry = { vm.loadMetrics() }
+        onRetry = { vm.loadMetrics() },
+        onBack = onBack
     )
+}
+
+
+enum class SortingBy{
+    DALY,MONTHLY,ANNUAL,TOTAL,MAX_DD,R_S,NONE
 }
 
 @Composable
 fun ResultsTablePage(
     uiState: ResultsPageUiState,
-    onRetry: (() -> Unit)? = null
+    onRetry: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null
 ) {
-    val trendResult = uiState.trendResultList
+    var sortingBy by remember { mutableStateOf(SortingBy.NONE) }
 
-    if (uiState.isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
+    val trendResult = uiState.trendResultList.sortedByDescending {
+        when(sortingBy){
+            SortingBy.DALY -> it.dailyRatePercent
+            SortingBy.MONTHLY -> it.monthlyRatePercent
+            SortingBy.ANNUAL -> it.annualRatePercent
+            SortingBy.TOTAL -> it.totalPeriodReturnPercent
+            SortingBy.MAX_DD -> it.maxDrawdownPercent
+            SortingBy.R_S -> it.rSquared
+            SortingBy.NONE -> 0.0
         }
-        return
     }
 
-    if (uiState.errorMessage != null) {
-        ConnectionErrorScreen(
-            errorMessage = uiState.errorMessage,
-            onRetry = onRetry
+
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 12.dp)
+    ) {
+        StageTopBar(
+            title = stringResource(R.string.results_title),
+            onBackClick = onBack
         )
-        return
-    }
 
-    val horizontalScrollState = rememberScrollState()
-
-    val assetColumnWidth = 75.dp
-    val metricColumnWidth = 94.dp
-
-    CompositionLocalProvider(LocalOverscrollFactory provides null) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 10.dp)
-        ) {
-            item {
-                ResultsHeaderSection(selectedDate = uiState.selectedDate)
-                Spacer(modifier = Modifier.height(20.dp))
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
+        } else if (uiState.errorMessage != null) {
+            ConnectionErrorScreen(
+                errorMessage = uiState.errorMessage,
+                modifier = Modifier.weight(1f),
+                onRetry = onRetry
+            )
+        } else {
+            val horizontalScrollState = rememberScrollState()
 
-            stickyHeader {
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.fillMaxWidth()
+            val assetColumnWidth = 75.dp
+            val metricColumnWidth = 94.dp
+
+            CompositionLocalProvider(LocalOverscrollFactory provides null) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .padding(horizontal = 10.dp)
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
 
-                        Text(
-                            text = stringResource(R.string.col_asset),
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .width(assetColumnWidth)
-                                .padding(8.dp)
-                        )
+                    item {
+                        ResultsHeaderSection(selectedDate = uiState.selectedDate)
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
 
-                        Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
-                            Text(
-                                stringResource(R.string.col_daily),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
-                            Text(
-                                stringResource(R.string.col_monthly),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
-                            Text(
-                                stringResource(R.string.col_annual),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
-                            Text(
-                                stringResource(R.string.col_total),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
-                            Text(
-                                stringResource(R.string.col_max_dd),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
-                            Text(
-                                stringResource(R.string.col_r_squared),
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                            )
+                    stickyHeader {
+                        Surface(
+                            color = MaterialTheme.colorScheme.background,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+
+                                Text(
+                                    text = stringResource(R.string.col_asset),
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .width(assetColumnWidth)
+                                        .clickable { sortingBy = SortingBy.NONE }
+                                        .padding(8.dp)
+                                )
+
+                                Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
+                                    Text(
+                                        stringResource(R.string.col_daily),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.DALY) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.DALY }
+                                            .padding(8.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.col_monthly),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.MONTHLY) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.MONTHLY }
+                                            .padding(8.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.col_annual),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.ANNUAL) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.ANNUAL }
+                                            .padding(8.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.col_total),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.TOTAL) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.TOTAL }
+                                            .padding(8.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.col_max_dd),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.MAX_DD) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.MAX_DD }
+                                            .padding(8.dp)
+                                    )
+                                    Text(
+                                        stringResource(R.string.col_r_squared),
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        textDecoration = if (sortingBy == SortingBy.R_S) TextDecoration.Underline else TextDecoration.None,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .width(metricColumnWidth)
+                                            .clickable { sortingBy = SortingBy.R_S }
+                                            .padding(8.dp)
+                                    )
+                                }
+                            }
                         }
+                        HorizontalDivider()
+                    }
+
+                    items(trendResult) { item ->
+
+                        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+
+                            Text(
+                                text = item.asset,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .width(assetColumnWidth)
+                                    .basicMarquee()
+                                    .padding(8.dp)
+                            )
+
+                            Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
+                                Text(
+                                    text = "${item.dailyRatePercent.format(2)}%",
+                                    textAlign = TextAlign.Center,
+                                    color = rateFontColor(item.dailyRatePercent),
+                                    modifier = Modifier
+                                        .width(metricColumnWidth)
+                                        .background(rateBackgroundColor(item.dailyRatePercent))
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = "${item.monthlyRatePercent.format(2)}%",
+                                    textAlign = TextAlign.Center,
+                                    color = rateFontColor(item.monthlyRatePercent),
+                                    modifier = Modifier
+                                        .width(metricColumnWidth)
+                                        .background(rateBackgroundColor(item.monthlyRatePercent))
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = "${item.annualRatePercent.format(2)}%",
+                                    textAlign = TextAlign.Center,
+                                    color = rateFontColor(item.annualRatePercent),
+                                    modifier = Modifier
+                                        .width(metricColumnWidth)
+                                        .background(rateBackgroundColor(item.annualRatePercent))
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = "${item.totalPeriodReturnPercent.format(2)}%",
+                                    textAlign = TextAlign.Center,
+                                    color = rateFontColor(item.totalPeriodReturnPercent),
+                                    modifier = Modifier
+                                        .width(metricColumnWidth)
+                                        .background(rateBackgroundColor(item.totalPeriodReturnPercent))
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = "${item.maxDrawdownPercent.format(2)}%",
+                                    textAlign = TextAlign.Center,
+                                    color = maxDrawdownFontColor(item.maxDrawdownPercent),
+                                    modifier = Modifier
+                                        .width(metricColumnWidth)
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = item.rSquared.format(2),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.width(metricColumnWidth).padding(8.dp)
+                                )
+                            }
+                        }
+                        HorizontalDivider()
                     }
                 }
-                HorizontalDivider()
-            }
-
-            items(trendResult) { item ->
-
-                Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-
-                    Text(
-                        text = item.asset,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .width(assetColumnWidth)
-                            .basicMarquee()
-                            .padding(8.dp)
-                    )
-
-                    Row(modifier = Modifier.horizontalScroll(horizontalScrollState).height(IntrinsicSize.Min)) {
-                        Text(
-                            text = "${item.dailyRatePercent.format(2)}%",
-                            textAlign = TextAlign.Center,
-                            color = rateFontColor(item.dailyRatePercent),
-                            modifier = Modifier
-                                .width(metricColumnWidth)
-                                .background(rateBackgroundColor(item.dailyRatePercent))
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "${item.monthlyRatePercent.format(2)}%",
-                            textAlign = TextAlign.Center,
-                            color = rateFontColor(item.monthlyRatePercent),
-                            modifier = Modifier
-                                .width(metricColumnWidth)
-                                .background(rateBackgroundColor(item.monthlyRatePercent))
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "${item.annualRatePercent.format(2)}%",
-                            textAlign = TextAlign.Center,
-                            color = rateFontColor(item.annualRatePercent),
-                            modifier = Modifier
-                                .width(metricColumnWidth)
-                                .background(rateBackgroundColor(item.annualRatePercent))
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "${item.totalPeriodReturnPercent.format(2)}%",
-                            textAlign = TextAlign.Center,
-                            color = rateFontColor(item.totalPeriodReturnPercent),
-                            modifier = Modifier
-                                .width(metricColumnWidth)
-                                .background(rateBackgroundColor(item.totalPeriodReturnPercent))
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "${item.maxDrawdownPercent.format(2)}%",
-                            textAlign = TextAlign.Center,
-                            color = maxDrawdownFontColor(item.maxDrawdownPercent),
-                            modifier = Modifier
-                                .width(metricColumnWidth)
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = item.rSquared.format(2),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.width(metricColumnWidth).padding(8.dp)
-                        )
-                    }
-                }
-                HorizontalDivider()
             }
         }
     }

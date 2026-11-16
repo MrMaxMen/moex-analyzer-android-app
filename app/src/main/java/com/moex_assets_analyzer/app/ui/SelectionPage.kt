@@ -37,12 +37,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -62,13 +62,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.moex_assets_analyzer.app.R
-import com.moex_assets_analyzer.app.others.LocaleHelper
 import com.moex_assets_analyzer.app.viewmodels.Dates
 import com.moex_assets_analyzer.app.viewmodels.SelectionPageUiState
 import com.moex_assets_analyzer.app.viewmodels.SelectionStep
@@ -88,7 +86,7 @@ fun SelectionPagePreview() {
             ) {
                 SelectionPage(
                     uiState = SelectionPageUiState(
-                        userInput = "",
+                        userInput = "A",
                         assetNames = listOf("AMFL", "AKMM", "LQDT"),
                         selectionStep = SelectionStep.ASSETS_SELECTION,
                         selectedAssets = setOf("AMFL")
@@ -156,37 +154,7 @@ fun SelectionPage(
     }
 }
 
-@Composable
-fun LanguageToggleButton(
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val isRussian = LocaleHelper.isRussian(context)
-    Surface(
-        onClick = { LocaleHelper.toggleLanguage(context) },
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-        modifier = modifier
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Language,
-                contentDescription = stringResource(R.string.language_toggle_desc),
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = if (isRussian) "EN" else "RU",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
+
 
 
 
@@ -242,7 +210,10 @@ private fun AssetsSelectionStep(
         animationSpec = tween(durationMillis = 600)
     )
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -255,7 +226,7 @@ private fun AssetsSelectionStep(
 
             TextField(
                 modifier = Modifier
-                    .padding(horizontal = 30.dp)
+                    .padding(horizontal = 30.dp, vertical = if(isSearchActive) 12.dp else 0.dp)
                     .fillMaxWidth()
                     .onFocusChanged { focusState ->
                         isTextFieldFocus = focusState.isFocused
@@ -333,15 +304,41 @@ private fun AssetsSelectionStep(
                     animationSpec = tween(250)
                 ) + fadeOut(animationSpec = tween(250))
             ) {
-                Button(
-                    onClick = { actions?.onDateSelectionStep() },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
-                        .padding(horizontal = 25.dp),
-                    shape = RoundedCornerShape(12.dp)
+                        .padding(horizontal = 30.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(stringResource(R.string.btn_next))
+
+                    IconButton(
+                        onClick = {
+                            isTextFieldFocus = false
+                            actions?.onInputChange("")
+                        },
+                        modifier = Modifier
+                            .height(50.dp)
+                            .weight(0.3f),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_desc_go_back)
+                        )
+                    }
+
+                    Button(
+                        onClick = { actions?.onDateSelectionStep() },
+                        modifier = Modifier
+                            .height(50.dp)
+                            .weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.btn_next))
+                    }
                 }
             }
         }
@@ -463,28 +460,10 @@ private fun DateSelectionStep(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .padding(start = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            IconButton(
-                onClick = { actions?.onBackToAssetsSelection() }
-            ){
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.content_desc_go_back)
-
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.select_date_title),
-                fontSize = 23.sp
-            )
-        }
+        StageTopBar(
+            title = stringResource(R.string.select_date_title),
+            onBackClick = { actions?.onBackToAssetsSelection() }
+        )
 
         Column(
             modifier = Modifier
@@ -543,36 +522,47 @@ private fun DateSelectionStep(
 
                 Spacer(Modifier.fillMaxWidth().height(30.dp))
 
-                dates.forEach {
-                    val isSelected = (selectedDate == it)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(70.dp)
-                            .padding(10.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .selectable(
-                                selected = isSelected,
-                                onClick = { actions?.onDateSelection(it) },
-                            )
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = null
-                        )
-                        Text(
-                            text = it.value.toString(),
-                            modifier = Modifier
-                                .alpha(0.4f)
-                                .padding(start = 5.dp)
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text(text = stringResource(it.textResId))
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(15.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest
+                ) {
 
+                    Column {
+
+                        dates.forEach {
+                            val isSelected = (selectedDate == it)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(70.dp)
+                                    .padding(10.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .selectable(
+                                        selected = isSelected,
+                                        onClick = { actions?.onDateSelection(it) },
+                                    )
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = null
+                                )
+                                Text(
+                                    text = it.value.toString(),
+                                    modifier = Modifier
+                                        .alpha(0.4f)
+                                        .padding(start = 5.dp)
+                                )
+                                Spacer(Modifier.weight(1f))
+                                Text(text = stringResource(it.textResId))
+
+                            }
+
+                        }
                     }
-
                 }
 
             }
