@@ -23,6 +23,7 @@
     <string name="date_2_years">2 года</string>
 
     <!-- Results Table -->
+    <string name="results_title">Результаты анализа</string>
     <string name="col_asset">Актив</string>
     <string name="col_daily">День</string>
     <string name="col_monthly">Месяц</string>

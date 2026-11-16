@@ -32,7 +32,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
         composable<ResultsRoute> {
             val vm : ResultsVM = viewModel(factory = ResultsVM.Factory)
-            ResultsTablePageRout(vm)
+            ResultsTablePageRout(
+                vm = vm,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable<ChartRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ChartRoute>()

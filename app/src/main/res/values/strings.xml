@@ -23,6 +23,7 @@
     <string name="date_2_years">2 Years</string>
 
     <!-- Results Table -->
+    <string name="results_title">Analysis Results</string>
     <string name="col_asset">Asset</string>
     <string name="col_daily">Daily</string>
     <string name="col_monthly">Monthly</string>
