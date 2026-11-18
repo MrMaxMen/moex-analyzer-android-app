@@ -456,7 +456,7 @@ private fun DateSelectionStep(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 7.dp),
+            .padding(top = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
