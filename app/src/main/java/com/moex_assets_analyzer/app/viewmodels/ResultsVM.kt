@@ -26,6 +26,7 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
 
     private var isLoading by mutableStateOf(false)
     var trendResultList by mutableStateOf<List<TrendResult>>(emptyList())
+    var insufficientDataAssets by mutableStateOf<List<String>>(emptyList())
     var errorMessage by mutableStateOf<String?>(null)
 
     init {
@@ -37,7 +38,9 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
             isLoading = true
             errorMessage = null
             try {
-                trendResultList = repository.getMetrics()
+                val result = repository.getAnalysisResult()
+                trendResultList = result.trendResults
+                insufficientDataAssets = result.insufficientDataAssets
             } catch (e: Exception) {
                 e.printStackTrace()
                 errorMessage = e.localizedMessage ?: "Failed to connect to MOEX server. Check internet connection."
@@ -51,6 +54,7 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
         get() = ResultsPageUiState(
             isLoading = isLoading,
             trendResultList = trendResultList,
+            insufficientDataAssets = insufficientDataAssets,
             errorMessage = errorMessage,
             selectedDate = repository.selectedDate
         )
@@ -59,6 +63,7 @@ class ResultsVM(private val repository: Repository) : ViewModel() {
 data class ResultsPageUiState(
     val isLoading: Boolean = false,
     val trendResultList: List<TrendResult> = emptyList(),
+    val insufficientDataAssets: List<String> = emptyList(),
     val errorMessage: String? = null,
     val selectedDate: LocalDate? = null
 )
